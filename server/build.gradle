@@ -36,9 +36,97 @@ android {
         sourceCompatibility JavaVersion.VERSION_17
         targetCompatibility JavaVersion.VERSION_17
     }
+    publishing {
+        singleVariant("release") {
+            withSourcesJar()
+            withJavadocJar()
+        }
+    }
+}
+
+afterEvaluate {
+    if (!(it.findProperty('publishLibrary') ?: false)) {
+        return
+    }
+
+    plugins.apply('maven-publish')
+    plugins.apply('signing')
+
+    if (parent == rootProject) {
+        group = "${groupIdBase}"
+    } else {
+        group = "${groupIdBase}.${parent.name}"
+    }
+    version = api_version_name
+    println("${displayName}: ${group}:${name}:${version}")
+
+    publishing {
+        publications {
+            mavenJava(MavenPublication) {
+                group group
+                artifactId name
+                version api_version_name
+                afterEvaluate {
+                    from components.release
+                }
+                pom {
+                    name = POM_NAME
+                    description = POM_DESCRIPTION
+                    url = POM_URL
+                    licenses {
+                        license {
+                            name = POM_LICENCE_NAME
+                            url = POM_LICENCE_URL
+                        }
+                    }
+                    developers {
+                        developer {
+                            name = POM_DEVELOPER_NAME
+                            url = POM_DEVELOPER_URL
+                        }
+                    }
+                    scm {
+                        connection = POM_SCM_CONNECTION
+                        url = POM_SCM_URL
+                    }
+                }
+            }
+        }
+        repositories {
+            maven {
+                name 'ossrh'
+                url 'https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/'
+                credentials(PasswordCredentials)
+            }
+        }
+    }
 }
 
 dependencies {
     implementation libs.annotation.jvm
-    compileOnly(project ":hiddenapi")
+//    implementation libs.hidden.compat
+    compileOnly libs.hidden.stub
+}
+
+ext {
+    groupIdBase = "io.github.yangfentuozi"
+
+    POM_NAME = "ServerTemplate"
+    POM_DESCRIPTION = "Implement a simple server in Android."
+
+    POM_INCEPTION_YEAR = "2025"
+    POM_PACKAGING = "aar"
+
+    POM_URL = "https://github.com/yangFenTuoZi/SeverTemplate"
+    POM_SCM_URL = "https://github.com/yangFenTuoZi/SeverTemplate"
+    POM_SCM_CONNECTION = "scm:git@github.com:yangFenTuoZi/SeverTemplate.git"
+    POM_SCM_DEV_CONNECTION = "scm:git@github.com:yangFenTuoZi/SeverTemplate.git"
+
+    POM_LICENCE_NAME = "MIT License"
+    POM_LICENCE_URL = "https://github.com/yangFenTuoZi/SeverTemplate/blob/master/LICENSE"
+    POM_LICENCE_DIST = "repo"
+
+    POM_DEVELOPER_ID = "yangfentuozi"
+    POM_DEVELOPER_NAME = "yangFenTuoZi"
+    POM_DEVELOPER_URL = "https://github.com/yangFenTuoZi"
 }

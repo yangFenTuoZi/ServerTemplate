@@ -16,7 +16,7 @@ dependencyResolutionManagement {
     repositories {
         maven { url 'https://maven.aliyun.com/repository/public/' }
         google()
-        jcenter()
+        mavenCentral()
         maven { url 'https://jitpack.io' }
         maven { url 'https://repo1.maven.org/maven2/' }
     }
@@ -24,4 +24,3 @@ dependencyResolutionManagement {
 
 rootProject.name = "SeverTemplate"
 include ':server'
-include ':hiddenapi'
