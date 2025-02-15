@@ -3,7 +3,8 @@ plugins {
     id 'maven-publish'
 }
 
-group = 'com.github.yangfentuozi'
+var group_name = 'com.github.yangfentuozi'
+group = group_name
 
 android {
     namespace 'yangFenTuoZi.server'
@@ -22,6 +23,28 @@ android {
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_17
         targetCompatibility JavaVersion.VERSION_17
+    }
+    publishing {
+        singleVariant("release") {
+            withSourcesJar()
+            withJavadocJar()
+        }
+    }
+}
+afterEvaluate {
+    android {
+    }
+    publishing {
+        publications {
+            mavenJava(MavenPublication) {
+                groupId = group_name
+                artifactId = 'library'
+                version = '1.0.0-aplha01'
+                afterEvaluate {
+                    from components.release
+                }
+            }
+        }
     }
 }
 
