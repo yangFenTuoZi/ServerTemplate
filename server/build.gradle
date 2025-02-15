@@ -50,6 +50,5 @@ afterEvaluate {
 
 dependencies {
     implementation libs.annotation.jvm
-//    implementation libs.hidden.compat
     compileOnly libs.hidden.stub
 }
