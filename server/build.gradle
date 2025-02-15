@@ -3,7 +3,7 @@ plugins {
     id 'maven-publish'
 }
 
-var group_name = 'com.github.yangfentuozi'
+var group_name = 'com.github.yangFenTuoZi'
 group = group_name
 
 android {
@@ -39,7 +39,7 @@ afterEvaluate {
             mavenJava(MavenPublication) {
                 groupId = group_name
                 artifactId = 'library'
-                version = '1.0.0-aplha01'
+                version = '1.0.0-alpha01'
                 afterEvaluate {
                     from components.release
                 }
