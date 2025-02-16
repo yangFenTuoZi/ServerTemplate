@@ -183,33 +183,33 @@ public abstract class ServerTemplate {
      *
      * @return 允许运行的UID数组
      */
-    abstract int[] getUids();
+    public abstract int[] getUids();
 
     /**
      * 获取服务名称
      *
      * @return 服务名称
      */
-    abstract String getServerName();
+    public abstract String getServerName();
 
     /**
      * 是否启用模拟上下文（FakeContext）
      *
      * @return 如果启用返回true，否则返回false
      */
-    abstract boolean enableFakeContext();
+    public abstract boolean enableFakeContext();
 
     /**
      * 是否启用日志记录器
      *
      * @return 如果启用返回true，否则返回false
      */
-    abstract boolean enableLogger();
+    public abstract boolean enableLogger();
 
     /**
      * 获取日志保存路径
      *
      * @return 日志保存路径的文件对象
      */
-    abstract File getLogDir();
+    public abstract File getLogDir();
 }
