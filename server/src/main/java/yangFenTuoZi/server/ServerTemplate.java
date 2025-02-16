@@ -21,7 +21,7 @@ import yangFenTuoZi.server.fakecontext.FakeContext;
  * @author yangFenTuoZi
  * @version 1.0
  */
-public abstract class SeverTemplate {
+public abstract class ServerTemplate {
     /** 应用包管理器 */
     public IPackageManager mPackageManager;
     /** 活动管理器 */
@@ -39,7 +39,7 @@ public abstract class SeverTemplate {
      * 构造函数，初始化服务
      * 包括设置主线程、权限检查、日志记录器初始化、异常处理等
      */
-    public SeverTemplate() {
+    public ServerTemplate() {
         // 切换到主线程
         if (Looper.getMainLooper() == null)
             Looper.prepareMainLooper();

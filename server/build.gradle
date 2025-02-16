@@ -32,8 +32,6 @@ android {
     }
 }
 afterEvaluate {
-    android {
-    }
     publishing {
         publications {
             mavenJava(MavenPublication) {
