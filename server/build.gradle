@@ -37,7 +37,7 @@ afterEvaluate {
             mavenJava(MavenPublication) {
                 groupId = group_name
                 artifactId = 'library'
-                version = '1.0.0-alpha01'
+                version = '1.0.0-alpha.1'
                 afterEvaluate {
                     from components.release
                 }
