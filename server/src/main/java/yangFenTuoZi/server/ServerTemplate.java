@@ -22,38 +22,87 @@ import yangFenTuoZi.server.fakecontext.FakeContext;
  * @version 1.0
  */
 public abstract class ServerTemplate {
-    /** 应用包管理器 */
+    /**
+     * 应用包管理器
+     */
     public IPackageManager mPackageManager;
-    /** 活动管理器 */
+    /**
+     * 活动管理器
+     */
     public IActivityManager mActivityManager;
-    /** FakeContext */
+    /**
+     * FakeContext
+     */
     private FakeContext mContext;
-    /** 日志记录器 */
+    /**
+     * 日志记录器
+     */
     private final Logger mLogger;
-    /** 主线程的Handler，用于在主线程执行任务 */
+    /**
+     * 主线程的Handler，用于在主线程执行任务
+     */
     private final Handler mHandler;
-    /** 主线程实例， 用于判断当前是否在主线程 */
+    /**
+     * 主线程实例， 用于判断当前是否在主线程
+     */
     private final Thread mainThread;
+
+    /**
+     * 服务参数
+     */
+    private final Args mArgs;
+
+    public static class Args {
+        public final String serverName;
+        public final File logDir;
+        public final int[] uids;
+        public final boolean enableLogger;
+        public final boolean enableFakeContext;
+
+        private Args(Builder builder) {
+            serverName = builder.serverName;
+            logDir = builder.logDir;
+            uids = builder.uids;
+            enableLogger = builder.enableLogger;
+            enableFakeContext = builder.enableFakeContext;
+        }
+
+        public static class Builder {
+            public String serverName;
+            public File logDir;
+            public int[] uids = new int[0];
+            public boolean enableLogger = false;
+            public boolean enableFakeContext = false;
+
+            public Builder() {
+            }
+
+            public Args build() {
+                return new Args(this);
+            }
+        }
+    }
 
     /**
      * 构造函数，初始化服务
      * 包括设置主线程、权限检查、日志记录器初始化、异常处理等
      */
-    public ServerTemplate() {
+    public ServerTemplate(Args args) {
+        mArgs = args;
         // 切换到主线程
         if (Looper.getMainLooper() == null)
             Looper.prepareMainLooper();
 
         // 判断uid
         int uid = Os.getuid();
-        if (Arrays.binarySearch(getUids(), uid) == -1) {
-            System.err.printf("Insufficient permission! Need to be launched by %s, but your uid is %d.\n", Arrays.toString(getUids()), uid);
+        if (Arrays.binarySearch(mArgs.uids, uid) == -1) {
+            System.err.printf("Insufficient permission! Need to be launched by %s, but your uid is %d.\n", Arrays.toString(mArgs.uids), uid);
             System.exit(255);
         }
         // 设置程序名称
-        DdmHandleAppName.setAppName(getServerName(), uid);
+        DdmHandleAppName.setAppName(mArgs.serverName, uid);
         // 如果启用Logger那么就设置为正常的Logger，否则就设置为空模板Logger
-        mLogger = enableLogger() ? new Logger(getServerName(), getLogDir()) : new Logger();
+        mLogger = mArgs.enableLogger ? new Logger(mArgs.serverName, mArgs.logDir) : new Logger();
         // jvm退出/异常处理
         Runtime.getRuntime().addShutdownHook(new Thread(this::onStop));
         Thread.setDefaultUncaughtExceptionHandler(this::onCrash);
@@ -61,7 +110,7 @@ public abstract class ServerTemplate {
         mPackageManager = IPackageManager.Stub.asInterface(ServiceManager.getService("package"));
         mActivityManager = IActivityManager.Stub.asInterface(ServiceManager.getService("activity"));
         // 看情况创建FakeContext
-        if (enableFakeContext()) createFakeContext(uid);
+        if (mArgs.enableFakeContext) createFakeContext(uid);
         // 创建一个Handler，为runOnMainThread奠定基础
         mHandler = new Handler();
         mainThread = Thread.currentThread();
@@ -130,12 +179,12 @@ public abstract class ServerTemplate {
         new Thread(() -> {
             if (mLogger != null)
                 mLogger.e("""
-                    Crashed !!!
-                    currentUID: %d
-                    ThreadID: %d
-                    ThreadName: %s
-                    Exception StackTrace: %s
-                    """, Os.getuid(), t.getId(), t.getName(), Logger.getStackTraceString(e));
+                        Crashed !!!
+                        currentUID: %d
+                        ThreadID: %d
+                        ThreadName: %s
+                        Exception StackTrace: %s
+                        """, Os.getuid(), t.getId(), t.getName(), Logger.getStackTraceString(e));
             exit(255);
         }).start();
     }
@@ -178,38 +227,4 @@ public abstract class ServerTemplate {
         return mLogger;
     }
 
-    /**
-     * 获取允许运行的UID列表
-     *
-     * @return 允许运行的UID数组
-     */
-    public abstract int[] getUids();
-
-    /**
-     * 获取服务名称
-     *
-     * @return 服务名称
-     */
-    public abstract String getServerName();
-
-    /**
-     * 是否启用模拟上下文（FakeContext）
-     *
-     * @return 如果启用返回true，否则返回false
-     */
-    public abstract boolean enableFakeContext();
-
-    /**
-     * 是否启用日志记录器
-     *
-     * @return 如果启用返回true，否则返回false
-     */
-    public abstract boolean enableLogger();
-
-    /**
-     * 获取日志保存路径
-     *
-     * @return 日志保存路径的文件对象
-     */
-    public abstract File getLogDir();
 }
