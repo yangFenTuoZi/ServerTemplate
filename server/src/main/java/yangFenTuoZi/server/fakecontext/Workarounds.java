@@ -15,7 +15,8 @@ public final class Workarounds {
     private static final Object ACTIVITY_THREAD;
 
     static {
-        Looper.prepareMainLooper();
+        if (Looper.getMainLooper() == null)
+            Looper.prepareMainLooper();
 
         try {
             ACTIVITY_THREAD_CLASS = Class.forName("android.app.ActivityThread");
