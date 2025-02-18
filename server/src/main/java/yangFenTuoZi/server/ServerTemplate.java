@@ -23,6 +23,11 @@ import yangFenTuoZi.server.fakecontext.FakeContext;
  */
 public abstract class ServerTemplate {
     /**
+     * 记录器，防止二次崩溃
+     */
+    private boolean isCrashed = false;
+
+    /**
      * 应用包管理器
      */
     public IPackageManager mPackageManager;
@@ -99,23 +104,33 @@ public abstract class ServerTemplate {
             System.err.printf("Insufficient permission! Need to be launched by %s, but your uid is %d.\n", Arrays.toString(mArgs.uids), uid);
             System.exit(255);
         }
+
+        // onCreate
+        onCreate();
+
         // 设置程序名称
         DdmHandleAppName.setAppName(mArgs.serverName, uid);
+
         // 如果启用Logger那么就设置为正常的Logger，否则就设置为空模板Logger
         mLogger = mArgs.enableLogger ? new Logger(mArgs.serverName, mArgs.logDir) : new Logger();
+
         // jvm退出/异常处理
         Runtime.getRuntime().addShutdownHook(new Thread(this::onStop));
         Thread.setDefaultUncaughtExceptionHandler(this::onCrash);
 
         mPackageManager = IPackageManager.Stub.asInterface(ServiceManager.getService("package"));
         mActivityManager = IActivityManager.Stub.asInterface(ServiceManager.getService("activity"));
+
         // 看情况创建FakeContext
         if (mArgs.enableFakeContext) createFakeContext(uid);
+
         // 创建一个Handler，为runOnMainThread奠定基础
         mHandler = new Handler();
         mainThread = Thread.currentThread();
+
         // onStart
         new Thread(this::onStart).start();
+
         // 主线程进入等待
         Looper.loop();
     }
@@ -128,6 +143,7 @@ public abstract class ServerTemplate {
     private void createFakeContext(int uid) {
         // 准备创建FakeContext
         mLogger.i("prepare to create FakeContext");
+
         // 获取当前uid对应的包名
         String packageName;
         if (uid == 0) packageName = "root";
@@ -144,13 +160,25 @@ public abstract class ServerTemplate {
             return;
         }
         mLogger.i("create FakeContext { UID = %d, packageName = \"%s\"}", uid, packageName);
+
         // 创建FakeContext
         mContext = new FakeContext(uid, packageName);
     }
 
     /**
+     * 服务创建时的回调方法
+     * 可以在这写自己的启动条件判断逻辑<br/><br/>
+     * 这个函数会在主线程执行，堆放太多代码可能导致阻塞<br/>
+     * <b>注意：</b>此时的环境没有初始化FakeContext、Logger、IPackageManager、IActivityManager...
+     */
+    public void onCreate() {
+        // 服务创建
+    }
+
+    /**
      * 服务启动时的回调方法
      * 子类可以重写此方法以实现自定义的启动逻辑<br/><br/>
+     * 这个函数会在子线程执行，若要切换到主线程请使用<code>runOnMainThread(Runnable)</code>函数<br/>
      * 可以在这写监听app状态，等待发送Binder给app<br/>
      * 或者写socket服务与app通信
      */
@@ -175,16 +203,18 @@ public abstract class ServerTemplate {
      * @param t 崩溃发生的线程
      * @param e 崩溃的异常信息
      */
-    private void onCrash(Thread t, Throwable e) {
+    public void onCrash(Thread t, Throwable e) {
+        if (isCrashed) System.exit(255);
+        isCrashed = true;
         new Thread(() -> {
             if (mLogger != null)
                 mLogger.e("""
-                        Crashed !!!
-                        currentUID: %d
-                        ThreadID: %d
-                        ThreadName: %s
-                        Exception StackTrace: %s
-                        """, Os.getuid(), t.getId(), t.getName(), Logger.getStackTraceString(e));
+                        ** Program Crashed ! **
+                        at Thread-%s
+                        UID: %d, PID: %d
+                        
+                        %s
+                        """, t.getName(), Os.getuid(), Os.getpid(), Logger.getStackTraceString(e));
             exit(255);
         }).start();
     }
@@ -210,9 +240,9 @@ public abstract class ServerTemplate {
     }
 
     /**
-     * 获取虚假上下文（FakeContext）实例
+     * 获取虚假上下文实例
      *
-     * @return FakeContext实例
+     * @return <code>FakeContext</code>实例
      */
     public FakeContext getContext() {
         return mContext;
@@ -221,7 +251,7 @@ public abstract class ServerTemplate {
     /**
      * 获取日志记录器实例
      *
-     * @return Logger实例
+     * @return <code>Logger</code>实例
      */
     public Logger getLogger() {
         return mLogger;
