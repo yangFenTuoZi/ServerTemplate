@@ -2,10 +2,13 @@
 agp = "8.8.1"
 annotationJvm = "1.9.1"
 hidden-api = "4.3.3"
+appcompat = "1.7.0"
 
 [libraries]
 annotation-jvm = { group = "androidx.annotation", name = "annotation-jvm", version.ref = "annotationJvm" }
 hidden-stub = { group = "dev.rikka.hidden", name = "stub", version.ref = "hidden-api" }
+appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "appcompat" }
 
 [plugins]
 android-library = { id = "com.android.library", version.ref = "agp" }
+android-application = { id = "com.android.application", version.ref = "agp" }

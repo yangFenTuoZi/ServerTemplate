@@ -24,3 +24,4 @@ dependencyResolutionManagement {
 
 rootProject.name = "ServerTemplate"
 include ':server'
+include ':demo'
