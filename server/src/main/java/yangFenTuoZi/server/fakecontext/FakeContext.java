@@ -9,13 +9,19 @@ import android.os.Build;
 import androidx.annotation.NonNull;
 
 public class FakeContext extends ContextWrapper {
-    public String PACKAGE_NAME;
-    public int UID;
+    private String PACKAGE_NAME;
+    private int UID;
 
-    public FakeContext(int uid, String packageName) {
+    public FakeContext() {
         super(Workarounds.getSystemContext());
-        PACKAGE_NAME = packageName;
-        UID = uid;
+    }
+
+    public void setPackageName(String PACKAGE_NAME) {
+        this.PACKAGE_NAME = PACKAGE_NAME;
+    }
+
+    public void setUid(int UID) {
+        this.UID = UID;
     }
 
     @Override

@@ -21,7 +21,7 @@ import yangFenTuoZi.server.fakecontext.FakeContext;
  * @author yangFenTuoZi
  * @version 1.0
  */
-public abstract class ServerTemplate {
+public abstract class Server extends FakeContext {
     /**
      * 记录器，防止二次崩溃
      */
@@ -35,10 +35,6 @@ public abstract class ServerTemplate {
      * 活动管理器
      */
     public IActivityManager mActivityManager;
-    /**
-     * FakeContext
-     */
-    private FakeContext mContext;
     /**
      * 日志记录器
      */
@@ -62,14 +58,12 @@ public abstract class ServerTemplate {
         public final File logDir;
         public final int[] uids;
         public final boolean enableLogger;
-        public final boolean enableFakeContext;
 
         private Args(Builder builder) {
             serverName = builder.serverName;
             logDir = builder.logDir;
             uids = builder.uids;
             enableLogger = builder.enableLogger;
-            enableFakeContext = builder.enableFakeContext;
         }
 
         public static class Builder {
@@ -77,7 +71,6 @@ public abstract class ServerTemplate {
             public File logDir;
             public int[] uids = new int[0];
             public boolean enableLogger = false;
-            public boolean enableFakeContext = false;
 
             public Builder() {
             }
@@ -92,7 +85,9 @@ public abstract class ServerTemplate {
      * 构造函数，初始化服务
      * 包括设置主线程、权限检查、日志记录器初始化、异常处理等
      */
-    public ServerTemplate(Args args) {
+    public Server(Args args) {
+        super();
+
         mArgs = args;
         // 切换到主线程
         if (Looper.getMainLooper() == null)
@@ -121,8 +116,8 @@ public abstract class ServerTemplate {
         mPackageManager = IPackageManager.Stub.asInterface(ServiceManager.getService("package"));
         mActivityManager = IActivityManager.Stub.asInterface(ServiceManager.getService("activity"));
 
-        // 看情况创建FakeContext
-        if (mArgs.enableFakeContext) createFakeContext(uid);
+        // 初始化FakeContext
+        initFakeContext(uid);
 
         // 创建一个Handler，为runOnMainThread奠定基础
         mHandler = new Handler();
@@ -136,13 +131,11 @@ public abstract class ServerTemplate {
     }
 
     /**
-     * 创建模拟上下文（FakeContext）
+     * 初始化模拟上下文（FakeContext）
      *
      * @param uid 当前用户的UID
      */
-    private void createFakeContext(int uid) {
-        // 准备创建FakeContext
-        mLogger.i("prepare to create FakeContext");
+    private void initFakeContext(int uid) {
 
         // 获取当前uid对应的包名
         String packageName;
@@ -159,12 +152,11 @@ public abstract class ServerTemplate {
             mLogger.e("got an empty package name");
             return;
         }
-        mLogger.i("create FakeContext { UID = %d, packageName = \"%s\"}", uid, packageName);
+        mLogger.i("init FakeContext { UID = %d, PACKAGE_NAME = \"%s\"}", uid, packageName);
 
-        // 创建FakeContext
-        mContext = new FakeContext();
-        mContext.setPackageName(packageName);
-        mContext.setUid(uid);
+        // 设置FakeContext uid和包名
+        setUid(uid);
+        setPackageName(packageName);
     }
 
     /**
@@ -239,15 +231,6 @@ public abstract class ServerTemplate {
     public void runOnMainThread(Runnable action) {
         if (Thread.currentThread() == mainThread) action.run();
         else mHandler.post(action);
-    }
-
-    /**
-     * 获取虚假上下文实例
-     *
-     * @return <code>FakeContext</code>实例
-     */
-    public FakeContext getContext() {
-        return mContext;
     }
 
     /**
