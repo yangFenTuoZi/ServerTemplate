@@ -86,7 +86,7 @@ public class Server extends ServerTemplate {
             @Override
             public void stop() {
                 isStop = true;
-                exit(0);
+                finish(0);
             }
         };
     }

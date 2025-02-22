@@ -214,7 +214,7 @@ public abstract class ServerTemplate extends ContextWrapper {
                         
                         %s
                         """, t.getName(), Os.getuid(), Os.getpid(), Logger.getStackTraceString(e));
-            exit(255);
+            finish(255);
         }).start();
     }
 
@@ -223,7 +223,7 @@ public abstract class ServerTemplate extends ContextWrapper {
      *
      * @param status 退出状态码
      */
-    public void exit(int status) {
+    public void finish(int status) {
         onStop();
         System.exit(status);
     }
